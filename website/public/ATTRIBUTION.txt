@@ -1,0 +1,10 @@
+Independent LOLBAS UI
+
+Catalog, project badge and favicon: LOLBAS-Project/LOLBAS
+https://github.com/LOLBAS-Project/LOLBAS
+https://lolbas-project.github.io/
+
+Original LOLBAS logos created by Adam Nadrowski, as credited by the upstream project.
+The LOLBAS project and this derived UI are distributed under GPL-3.0.
+See LICENSE.txt, UPSTREAM_NOTICE.md and THIRD_PARTY_NOTICES.txt.
+This independently hosted interface is not the official LOLBAS site.

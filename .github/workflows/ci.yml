@@ -1,0 +1,71 @@
+name: Validate UI
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: validate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: website
+    env:
+      LOLBAS_SOURCE_DIR: ${{ github.workspace }}/.upstream/yml
+      SITE_URL: https://magicsword-io.github.io
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+      - name: Resolve upstream snapshot
+        id: upstream
+        run: node scripts/check-upstream.mjs
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_REBUILD: "true"
+      - name: Checkout immutable upstream data
+        uses: actions/checkout@v4
+        with:
+          repository: LOLBAS-Project/LOLBAS
+          ref: ${{ steps.upstream.outputs.revision }}
+          path: .upstream
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run check
+      - run: npm run test:data
+      - name: Test synchronization and provenance
+        run: node --test scripts/*.test.mjs
+        working-directory: .
+      - run: npx playwright install --with-deps chromium
+      - name: Build root site
+        run: npm run build
+        env:
+          SITE_BASE: ""
+      - name: Test full root workflow
+        run: npm test
+        env:
+          SITE_BASE: ""
+      - name: Build prefixed site
+        run: npm run build
+        env:
+          SITE_BASE: /lolbas-ui
+      - name: Test prefixed navigation
+        run: npm test
+        env:
+          SITE_BASE: /lolbas-ui

@@ -1,0 +1,176 @@
+name: Publish independent LOLBAS UI
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "2-57/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild even when UI and upstream revisions are unchanged
+        type: boolean
+        default: false
+      resume:
+        description: Resume tracking upstream HEAD after a pinned rollback
+        type: boolean
+        default: false
+      upstream_revision:
+        description: Optional full 40-hex upstream commit for rollback
+        type: string
+        required: false
+permissions:
+  contents: read
+# Serialize resolution through state recording, including forced rollbacks.
+concurrency:
+  group: lolbas-ui-publication
+  cancel-in-progress: false
+jobs:
+  resolve:
+    if: >-
+      vars.PAGES_ENABLED == 'true' && github.repository == 'magicsword-io/lolbas-ui' && github.ref == 'refs/heads/main' && !github.event.repository.fork && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE_URL: ${{ vars.SITE_URL || 'https://magicsword-io.github.io' }}
+      SITE_BASE: ${{ vars.SITE_BASE || '/lolbas-ui' }}
+    outputs:
+      revision: ${{ steps.upstream.outputs.revision }}
+      changed: ${{ steps.upstream.outputs.changed }}
+      site_url: ${{ steps.upstream.outputs.site_url }}
+      site_base: ${{ steps.upstream.outputs.site_base }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+      - name: Resolve upstream and compare deployed revisions
+        id: upstream
+        run: node scripts/check-upstream.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE_REBUILD: ${{ github.event_name == 'workflow_dispatch' && inputs.force && 'true' || 'false' }}
+          RESUME_UPSTREAM: ${{ github.event_name == 'workflow_dispatch' && inputs.resume && 'true' || 'false' }}
+          UPSTREAM_REVISION: ${{ github.event_name == 'workflow_dispatch' && inputs.upstream_revision || '' }}
+      - name: Preserve exact deployment plan
+        if: steps.upstream.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .sync/plan.json
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+  build:
+    needs: resolve
+    if: needs.resolve.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: website
+    env:
+      LOLBAS_SOURCE_DIR: ${{ github.workspace }}/.upstream/yml
+      SITE_URL: ${{ needs.resolve.outputs.site_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: deployment-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .sync
+      - name: Checkout immutable upstream data
+        uses: actions/checkout@v4
+        with:
+          repository: LOLBAS-Project/LOLBAS
+          ref: ${{ needs.resolve.outputs.revision }}
+          path: .upstream
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run check
+      - run: npm run test:data
+      - name: Test synchronization and provenance
+        run: node --test scripts/*.test.mjs
+        working-directory: .
+      - run: npx playwright install --with-deps chromium
+      - name: Build root site
+        run: npm run build
+        env:
+          SITE_BASE: ""
+      - name: Test full root workflow
+        run: npm test
+        env:
+          SITE_BASE: ""
+      - name: Build prefixed site
+        run: npm run build
+        env:
+          SITE_BASE: /lolbas-ui
+      - name: Test prefixed navigation
+        run: npm test
+        env:
+          SITE_BASE: /lolbas-ui
+      - name: Build configured publication
+        run: npm run build
+        env:
+          SITE_BASE: ${{ needs.resolve.outputs.site_base }}
+      - name: Test configured publication
+        run: npm test
+        env:
+          SITE_BASE: ${{ needs.resolve.outputs.site_base }}
+      - name: Record build provenance
+        run: node scripts/write-build-info.mjs
+        working-directory: .
+      - name: Upload tested Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+          path: website/dist/
+  deploy:
+    needs: build
+    if: >-
+      vars.PAGES_ENABLED == 'true' && github.repository == 'magicsword-io/lolbas-ui' && github.ref == 'refs/heads/main' && !github.event.repository.fork && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy tested artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+  record-state:
+    needs: [build, deploy]
+    if: >-
+      vars.PAGES_ENABLED == 'true' && github.repository == 'magicsword-io/lolbas-ui' && github.ref == 'refs/heads/main' && !github.event.repository.fork && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.0
+      - uses: actions/download-artifact@v4
+        with:
+          name: deployment-plan-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .sync
+      - name: Advance state only after successful deployment
+        run: node scripts/record-deployment.mjs
+        env:
+          GH_TOKEN: ${{ github.token }}
