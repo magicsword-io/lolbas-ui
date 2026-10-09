@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "uiRevision": "aae2df04c8fdfb73574af8f03008d15888f7bbde",
+  "uiRevision": "8000f34ca4ed99f0b1b5b46547521f92cb01ea62",
   "upstream": {
     "repository": "LOLBAS-Project/LOLBAS",
     "branch": "master",
@@ -12,9 +12,9 @@
   },
   "hold": false,
   "reason": "ui-changed",
-  "checkedAt": "2026-10-09T18:25:27.242Z",
-  "stateCommit": "d97273974274b2722f84c6105695b824c1ae664b",
+  "checkedAt": "2026-10-09T18:28:05.429Z",
+  "stateCommit": "88104c48ec5332f987c1f4b8d140be2286c7834c",
   "mergeEventIds": [],
-  "deployedAt": "2026-10-09T18:27:46.613Z",
-  "runId": "37973136538"
+  "deployedAt": "2026-10-09T18:30:16.843Z",
+  "runId": "37973365152"
 }
