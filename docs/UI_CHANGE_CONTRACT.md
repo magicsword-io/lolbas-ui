@@ -9,8 +9,8 @@ Keep current LOLBAS appearance, search/filter/sorting/details/timeline behavior,
 and compatible generated exports. Clearly credit the upstream project and identify
 this as an independent interface. No MagicSword marketing in the UI.
 
-Publication to this new site's GitHub Pages is authorized. Repository remains
-private until the user separately changes visibility. A future custom domain
+The user explicitly authorized making magicsword-io/lolbas-ui public and hosting
+this new site on GitHub Pages. A future custom domain
 (lolbas.io or another user-owned domain) must be supported via configuration.
 Do not modify upstream LOLBAS, its official publisher, or the existing fork PR.
 
@@ -30,7 +30,7 @@ checks, browser interactions/screenshots, independent release/security review,
 remote CI, first successful deployment and unchanged sync run.
 
 Stop after new-repo push, verified live UI and enabled scheduled sync with exact
-revision evidence. Domain registration/DNS changes and making repo public are
-separate future actions. GitHub schedules may be delayed/disabled after inactivity;
+revision evidence. Domain registration/DNS changes require separate authorization.
+GitHub schedules may be delayed/disabled after inactivity;
 document monitoring and webhook/repository_dispatch option if truly instant events
 are later needed.

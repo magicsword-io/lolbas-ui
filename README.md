@@ -79,7 +79,7 @@ identify both inputs. Detail pages link to the exact upstream source commit,
 including during a rollback hold; contribution links use its default branch.
 
 GitHub schedules are best effort: they can be delayed, dropped under load, or
-automatically disabled after 60 days of repository inactivity once public.
+automatically disabled after 60 days of repository inactivity in a public repository.
 Monitor Actions and the served `build-info.json`; re-enable the workflow if
 GitHub disables it. A manual dispatch always checks for updates. For truly
 immediate merge notifications, upstream maintainers would need to configure a
