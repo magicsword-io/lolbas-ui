@@ -127,7 +127,11 @@ Disable publication with `PAGES_ENABLED=false` when diagnosing a failure. Existi
 Pages output stays live. Avoid hand-editing deployment state: corrupt/unreadable
 state stops publication instead of being treated as a fresh install. If Pages
 deployed but state recording failed, repair the job's repository permission and
-rerun; the next successful check may safely rebuild the same snapshot.
+choose **Re-run all jobs** (not only failed jobs), or make a fresh manual dispatch.
+Artifacts are namespaced by run attempt, so a failed-job-only rerun cannot find
+artifacts from its earlier successful jobs. If recovering a pinned rollback,
+repeat its upstream SHA: the hold is durable only after state recording succeeds.
+The next successful normal check may safely rebuild the same snapshot.
 
 ## Attribution and compatibility
 

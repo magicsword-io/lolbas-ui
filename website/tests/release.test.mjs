@@ -219,7 +219,15 @@ test('root, prefix and configured browser tests gate exactly the published artif
     assert.equal(job['continue-on-error'], undefined);
     for (const step of steps) {
       assert.equal(step['continue-on-error'], undefined);
-      assert.equal(step.if, undefined);
+      if (
+        step.uses === 'actions/upload-artifact@v4' &&
+        step.with?.path ===
+          'website/playwright-report/\nwebsite/test-results/\n'
+      ) {
+        assert.equal(step.if, 'always()');
+      } else {
+        assert.equal(step.if, undefined);
+      }
     }
   }
   const steps = publish.jobs.build.steps;

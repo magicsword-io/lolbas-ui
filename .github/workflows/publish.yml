@@ -109,6 +109,16 @@ jobs:
         run: npm test
         env:
           SITE_BASE: ""
+      - name: Preserve root browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: root-browser-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            website/playwright-report/
+            website/test-results/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Build prefixed site
         run: npm run build
         env:
@@ -125,6 +135,16 @@ jobs:
         run: npm test
         env:
           SITE_BASE: ${{ needs.resolve.outputs.site_base }}
+      - name: Preserve hosted-path browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hosted-browser-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            website/playwright-report/
+            website/test-results/
+          if-no-files-found: ignore
+          retention-days: 14
       - name: Record build provenance
         run: node scripts/write-build-info.mjs
         working-directory: .
