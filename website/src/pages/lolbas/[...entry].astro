@@ -1,7 +1,12 @@
 ---
 import { sitePath } from '../../lib/site';
 import Base from '../../layouts/Base.astro';
-import { catalog, typeLabels, type CatalogEntry } from '../../lib/catalog';
+import {
+  catalog,
+  typeLabels,
+  upstreamSnapshot,
+  type CatalogEntry,
+} from '../../lib/catalog';
 import '../../styles/detail.css';
 
 export function getStaticPaths() {
@@ -53,8 +58,8 @@ function host(value: string) {
     return '';
   }
 }
-const sourceURL = `https://github.com/LOLBAS-Project/LOLBAS/blob/master/${entry.source}`;
-const editURL = `https://github.com/LOLBAS-Project/LOLBAS/edit/master/${entry.source}`;
+const sourceURL = `https://github.com/LOLBAS-Project/LOLBAS/blob/${upstreamSnapshot.revision}/${entry.source}`;
+const editURL = `https://github.com/LOLBAS-Project/LOLBAS/edit/${upstreamSnapshot.branch}/${entry.source}`;
 const related = catalog
   .filter(
     (other) =>

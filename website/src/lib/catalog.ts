@@ -1,4 +1,7 @@
 import data from '../data/catalog.json';
+import snapshot from '../data/source.json';
+
+export const upstreamSnapshot = snapshot;
 
 export interface Command {
   Command: string;

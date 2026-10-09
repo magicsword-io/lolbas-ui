@@ -2,6 +2,8 @@ import { readFile, readdir, mkdir, writeFile, lstat } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve, join } from 'node:path';
 import { parseDocument } from 'yaml';
+import { execFileSync } from 'node:child_process';
+import { validatePlan } from '../../scripts/sync-lib.mjs';
 
 export const websiteRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -11,6 +13,33 @@ export const sourceRoot = process.env.LOLBAS_SOURCE_DIR
   ? resolve(process.env.LOLBAS_SOURCE_DIR)
   : resolve(websiteRoot, '../.upstream/yml');
 export const canonicalOrigin = 'https://lolbas-project.github.io';
+export async function sourceSnapshot({
+  checkoutRoot = sourceRoot,
+  planFile = resolve(websiteRoot, '../.sync/plan.json'),
+  ci = Boolean(process.env.CI),
+} = {}) {
+  const revision = execFileSync(
+    'git',
+    ['-C', checkoutRoot, 'rev-parse', 'HEAD'],
+    {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    },
+  ).trim();
+  if (!/^[a-f0-9]{40}$/.test(revision))
+    throw new Error('Invalid source checkout revision');
+  try {
+    const plan = validatePlan(JSON.parse(await readFile(planFile, 'utf8')));
+    if (plan.upstream.revision === revision)
+      return { revision, branch: plan.upstream.branch };
+    if (ci) throw new Error('Source checkout differs from the deployment plan');
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    if (ci) throw new Error('CI requires a resolved deployment plan');
+  }
+  // Local source checkouts may not have a CI plan. The view link is still pinned.
+  return { revision, branch: 'master' };
+}
 export const collections = {
   OSBinaries: 'Binaries',
   OSLibraries: 'Libraries',
@@ -345,9 +374,11 @@ export const toBadge = (count) =>
 
 export async function prepareData() {
   const records = await loadCatalog();
+  const snapshot = await sourceSnapshot();
   const json = (value) => `${JSON.stringify(value, null, 2)}\n`;
   const outputs = {
     'src/data/catalog.json': json(records),
+    'src/data/source.json': json(snapshot),
     'public/api/lolbas.json': json(toApi(records)),
     'public/api/lolbas.csv': toCsv(records),
     'public/mitre_attack_navigator_layer.json': json(toNavigator(records)),

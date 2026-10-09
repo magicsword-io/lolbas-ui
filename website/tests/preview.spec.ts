@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { sourceSnapshot } from '../scripts/prepare-data.mjs';
 
 test('UI-SITE-001 independent hosted preview keeps navigation, assets and data under its base path', async ({
   page,
@@ -46,6 +47,11 @@ test('UI-SITE-001 independent hosted preview keeps navigation, assets and data u
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
     'href',
     new URL(`${base}/lolbas/Binaries/Certutil/`, site).href,
+  );
+  const snapshot = await sourceSnapshot();
+  await expect(page.getByRole('link', { name: 'View source' })).toHaveAttribute(
+    'href',
+    `https://github.com/LOLBAS-Project/LOLBAS/blob/${snapshot.revision}/yml/OSBinaries/Certutil.yml`,
   );
   const copy = page.locator('[data-copy]').first();
   const command = await copy.getAttribute('data-copy');

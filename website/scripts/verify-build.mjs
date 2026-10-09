@@ -8,10 +8,12 @@ import {
   toNavigator,
   toBadge,
   websiteRoot,
+  sourceSnapshot,
 } from './prepare-data.mjs';
 
 const dist = resolve(websiteRoot, process.argv[2] ?? 'dist');
 const catalog = await loadCatalog();
+const snapshot = await sourceSnapshot();
 const json = async (path) =>
   JSON.parse(await readFile(join(dist, path), 'utf8'));
 assert.deepEqual(
@@ -52,8 +54,10 @@ for (const entry of catalog) {
   checkCanonical(html, entry.url);
   assert.ok(html.includes(entry.Name), `${entry.url} must show ${entry.Name}`);
   assert.ok(
-    html.includes(entry.source),
-    `${entry.url} must link its canonical source`,
+    html.includes(
+      `https://github.com/LOLBAS-Project/LOLBAS/blob/${snapshot.revision}/${entry.source}`,
+    ),
+    `${entry.url} must link its exact source snapshot`,
   );
 }
 console.log(

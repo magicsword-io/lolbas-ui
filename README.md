@@ -75,7 +75,8 @@ deployment does a separate job advance `deployment-state/deployment.json`. That
 branch contains metadata only; source data is never pushed here. Failed builds or
 deployments don't acknowledge the upstream SHA and will be retried next check.
 The output's `build-info.json`, `source-revision.txt` and `upstream-revision.txt`
-identify both inputs.
+identify both inputs. Detail pages link to the exact upstream source commit,
+including during a rollback hold; contribution links use its default branch.
 
 GitHub schedules are best effort: they can be delayed, dropped under load, or
 automatically disabled after 60 days of repository inactivity once public.
