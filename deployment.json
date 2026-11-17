@@ -4,7 +4,7 @@
   "upstream": {
     "repository": "LOLBAS-Project/LOLBAS",
     "branch": "master",
-    "revision": "8916857956bf002ac6415e285bc13b9ce4048d9c"
+    "revision": "351e280b9b133c0215e2930d35aad85297e324f9"
   },
   "site": {
     "url": "https://magicsword-io.github.io",
@@ -12,9 +12,9 @@
   },
   "hold": false,
   "reason": "upstream-changed",
-  "checkedAt": "2026-11-17T22:12:19.540Z",
-  "stateCommit": "37b2308a93eee86389ebd3dabf9ac338d130f970",
+  "checkedAt": "2026-11-17T22:25:09.721Z",
+  "stateCommit": "3b396204c5162015aacb8cd04d430eebfddeb2ee",
   "mergeEventIds": [],
-  "deployedAt": "2026-11-17T22:14:34.795Z",
-  "runId": "44187654162"
+  "deployedAt": "2026-11-17T22:27:02.106Z",
+  "runId": "44189810605"
 }
